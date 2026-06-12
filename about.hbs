@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cuesheet — Third-party licenses</title>
+<style>
+  body { font-family: Palatino, Georgia, serif; max-width: 46rem; margin: 2rem auto; padding: 0 1rem; color: #33271C; background: #F7EED7; }
+  h1 { border-bottom: 1px solid #7A4419; padding-bottom: .3rem; }
+  .license { margin: 2rem 0; }
+  .license h3 { margin-bottom: .2rem; }
+  .license pre { white-space: pre-wrap; font-size: .8rem; background: #fff8e9; padding: 1rem; border: 1px solid #EFD9A7; }
+  .used-by { font-size: .85rem; color: #7A4419; }
+</style>
+</head>
+<body>
+<h1>Third-party licenses</h1>
+<p>Cuesheet bundles the following open-source components. Thank you to all their authors.</p>
+{{#each licenses}}
+<div class="license">
+  <h3>{{name}}</h3>
+  <p class="used-by">Used by:
+    {{#each used_by}}
+      <a href="{{#if crate.repository}}{{crate.repository}}{{else}}https://crates.io/crates/{{crate.name}}{{/if}}">{{crate.name}} {{crate.version}}</a>{{#unless @last}}, {{/unless}}
+    {{/each}}
+  </p>
+  <pre>{{text}}</pre>
+</div>
+{{/each}}
+</body>
+</html>

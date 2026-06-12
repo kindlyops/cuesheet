@@ -81,7 +81,8 @@ cuesheet/
 │   │   │   └── ports.rs        # PlaylistSource, PdfCompiler, Clock traits
 │   │   └── tests/              # unit + golden-file tests, fixture builder
 │   ├── cuesheet-typst/         # PdfCompiler adapter: typst crate, font embedding, World impl
-│   └── cuesheet-cli/           # headless driving adapter for CI/golden tests
+│   ├── cuesheet-cli/           # headless driving adapter for CI/golden tests
+│   └── cuesheet-wasm/          # wasm-bindgen adapter: the browser app (no Tauri at all)
 ├── src-tauri/                  # Tauri app: commands, dialog/drop adapters, updater config
 ├── src/                        # frontend (Svelte 5 + TypeScript + Vite)
 ├── docs/PLAN.md
@@ -255,7 +256,25 @@ handmade-feeling, sharing the app's design language.
 - **Budget:** scene kept under ~1 MB of assets, lazy-initialized after first paint, graceful
   no-WebGL fallback to the static render.
 
-## 9. Milestones
+## 9. Browser (WASM) version
+
+The hexagonal split pays off here: the browser build needs **no Tauri**.
+`cuesheet-core` + `cuesheet-typst` compile to `wasm32-unknown-unknown` behind a
+thin `cuesheet-wasm` adapter (`wasm-bindgen`), exposing
+`generate(bytes: &[u8]) -> { playlistName, suggestedFilename, pdf: Vec<u8> }`.
+
+- To make the core wasm-clean, playlist databases are read with a small
+  pure-Rust SQLite file reader (`cuesheet-core/src/sqlite.rs`) instead of
+  rusqlite's bundled C SQLite; rusqlite remains a dev-dependency used only by
+  the test fixture builder. No temp files anywhere in the core path.
+- The web app lives on the Pages site ("Try it in your browser"): drop a
+  playlist onto the page, the wasm module generates the PDF entirely
+  client-side (nothing uploaded), and the browser downloads
+  `<playlist>-cuesheet.pdf`.
+- Built with `wasm-pack` in the `pages.yml` workflow; the wasm bundle is
+  lazy-loaded so the landing page stays light.
+
+## 10. Milestones
 
 1. **M1 — Core port:** workspace scaffold; model + ZIP/SQLite parser; fixture builder;
    unit + parser tests green in CI.
@@ -269,6 +288,8 @@ handmade-feeling, sharing the app's design language.
    first tagged draft release (unsigned) validating end-to-end installers on both OSes.
 6. **M6 — Pages site:** red-panda diorama scene, landing page content, download buttons
    wired to latest release, `pages.yml` deploy workflow.
+7. **M7 — Browser app:** `cuesheet-wasm` crate, "Try it in your browser" drop zone on the
+   Pages site, wasm-pack build wired into `pages.yml`.
 
 ## 10. Risks / notes
 

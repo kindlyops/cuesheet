@@ -1,0 +1,15 @@
+[package]
+name = "cuesheet-cli"
+description = "Headless driving adapter: generate a cuesheet PDF from a playlist file"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "cuesheet"
+path = "src/main.rs"
+
+[dependencies]
+cuesheet-core.workspace = true
+cuesheet-typst.workspace = true

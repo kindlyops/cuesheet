@@ -1,0 +1,9 @@
+/target
+node_modules/
+dist/
+.DS_Store
+*.local
+site/dist/
+src-tauri/target/
+src-tauri/gen/
+THIRD_PARTY_LICENSES.html

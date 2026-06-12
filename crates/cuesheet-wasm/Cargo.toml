@@ -1,0 +1,15 @@
+[package]
+name = "cuesheet-wasm"
+description = "wasm-bindgen adapter: the browser version of Cuesheet (no Tauri)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+cuesheet-core.workspace = true
+cuesheet-typst.workspace = true
+wasm-bindgen = "0.2"

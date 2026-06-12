@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    env:
+      # Updater bundle signing — release builds work without these, but the
+      # in-app updater can only verify bundles signed with your key.
+      TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            .
+            src-tauri
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # --- macOS signing + notarization (no-op until secrets exist) ---
+      - name: Import Apple Developer ID certificate
+        if: matrix.platform == 'macos-latest' && env.HAS_APPLE_CERT == 'true'
+        env:
+          HAS_APPLE_CERT: ${{ secrets.APPLE_CERTIFICATE != '' }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+          echo "$APPLE_CERTIFICATE" | base64 --decode > $RUNNER_TEMP/cert.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import $RUNNER_TEMP/cert.p12 -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      # --- Windows Authenticode (no-op until secrets exist) ---
+      - name: Import Windows code-signing certificate
+        if: matrix.platform == 'windows-latest' && env.HAS_WIN_CERT == 'true'
+        shell: pwsh
+        env:
+          HAS_WIN_CERT: ${{ secrets.WINDOWS_CERTIFICATE != '' }}
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          $pfx = Join-Path $env:RUNNER_TEMP cert.pfx
+          [IO.File]::WriteAllBytes($pfx, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $pwd = ConvertTo-SecureString $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pwd
+          echo "WIN_CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
+
+      - name: Build and publish draft release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Apple signing/notarization env consumed by the Tauri bundler when set
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Cuesheet ${{ github.ref_name }}"
+          releaseBody: |
+            See the assets below to download and install.
+
+            Installers are unsigned until code-signing credentials are
+            configured; macOS Gatekeeper and Windows SmartScreen may warn on
+            first launch.
+          releaseDraft: true
+          prerelease: false
+          args: >-
+            ${{ matrix.args }}
+            ${{ env.WIN_CERT_THUMBPRINT != '' && format('--config {{"bundle":{{"windows":{{"certificateThumbprint":"{0}"}}}}}}', env.WIN_CERT_THUMBPRINT) || '' }}
