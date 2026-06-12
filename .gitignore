@@ -7,3 +7,4 @@ site/dist/
 src-tauri/target/
 src-tauri/gen/
 THIRD_PARTY_LICENSES.html
+site/public/wasm/
