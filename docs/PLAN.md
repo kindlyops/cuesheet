@@ -234,7 +234,28 @@ assets, reduced-motion-respecting transitions.
 The hexagonal split is what makes every functional test headless: nothing in
 `cuesheet-core`/`cuesheet-typst` knows Tauri exists.
 
-## 8. Milestones
+## 8. GitHub Pages site (three.js)
+
+A single-page marketing site at `https://kindlyops.github.io/cuesheet/`, quirky and
+handmade-feeling, sharing the app's design language.
+
+- **Centerpiece:** a paper-craft, stop-motion-styled autumn diorama — a low-poly **red
+  panda** among paper trees and falling leaves, in the Mr Fox palette — rendered with
+  three.js. The scene parallax-rotates subtly with scroll and mouse movement; animation
+  uses a gentle stop-motion cadence (stepped keyframes at ~12 fps feel) and respects
+  `prefers-reduced-motion` with a static hero render fallback.
+- **Content below the fold:** what-it-does blurb in the same Tufte typography, app
+  screenshots, and macOS/Windows download buttons that resolve the latest GitHub Release
+  assets at load time via the public Releases API (no rebuild needed per release).
+- **Implementation:** `site/` directory in this repo — Vite + TypeScript + three.js, models
+  authored as glTF (low-poly, flat paper-texture materials, hand-built or via Blender
+  export committed to the repo). No framework; the page is mostly static HTML/CSS.
+- **Deploy:** `pages.yml` workflow builds `site/` and deploys via
+  `actions/deploy-pages` on every push to `main` touching `site/`.
+- **Budget:** scene kept under ~1 MB of assets, lazy-initialized after first paint, graceful
+  no-WebGL fallback to the static render.
+
+## 9. Milestones
 
 1. **M1 — Core port:** workspace scaffold; model + ZIP/SQLite parser; fixture builder;
    unit + parser tests green in CI.
@@ -246,8 +267,10 @@ The hexagonal split is what makes every functional test headless: nothing in
    reveal-in-folder, last-directory memory.
 5. **M5 — Pipeline:** ci.yml, release.yml with gated signing + updater, `docs/RELEASING.md`,
    first tagged draft release (unsigned) validating end-to-end installers on both OSes.
+6. **M6 — Pages site:** red-panda diorama scene, landing page content, download buttons
+   wired to latest release, `pages.yml` deploy workflow.
 
-## 9. Risks / notes
+## 10. Risks / notes
 
 - **Golden parity:** the vbs template emits some fields (clip filenames, resolution) that
   come from the media pipeline; the offline app reproduces vbs's behavior for the
