@@ -7,6 +7,11 @@ import { wireDownloadButtons } from './downloads';
 wireDownloadButtons();
 
 // ---------------------------------------------------------------------------
+// In-browser app: the wasm-compiled core behind the drop zone.
+// ---------------------------------------------------------------------------
+import('./webapp').then(({ initWebapp }) => initWebapp());
+
+// ---------------------------------------------------------------------------
 // Hero scene: lazy-init after first paint so the page is interactive first.
 // ---------------------------------------------------------------------------
 function webglAvailable(): boolean {

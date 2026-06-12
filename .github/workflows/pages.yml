@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      - 'crates/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -29,6 +30,20 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
 
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install wasm-pack
+        run: |
+          curl -sSfL https://github.com/rustwasm/wasm-pack/releases/download/v0.13.1/wasm-pack-v0.13.1-x86_64-unknown-linux-musl.tar.gz \
+            | tar xz --strip-components=1 -C /usr/local/bin --wildcards '*/wasm-pack'
+
+      - name: Build browser engine (wasm)
+        run: wasm-pack build crates/cuesheet-wasm --target web --release --out-dir ../../site/public/wasm
+
       - name: Install dependencies
         working-directory: site
         run: npm ci
@@ -38,6 +53,8 @@ jobs:
         run: npm run build
 
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

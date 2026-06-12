@@ -328,3 +328,40 @@ body.egg-active {
   overflow: hidden;
   background: var(--ink);
 }
+
+/* ---- In-browser app drop zone ---- */
+.webapp {
+  margin: 1.5rem 0 2rem;
+  padding: 2.2rem 1.5rem;
+  border: 2px dashed var(--russet);
+  border-radius: 10px;
+  background: var(--apple-cider);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.webapp:hover,
+.webapp:focus-visible,
+.webapp.webapp-hover {
+  border-color: var(--fox);
+  background: #f3e3bd;
+  outline: none;
+}
+.webapp p {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+.webapp small {
+  color: var(--russet);
+}
+.webapp[data-state='busy'] .webapp-status {
+  color: var(--russet);
+  font-style: italic;
+}
+.webapp[data-state='done'] .webapp-status {
+  color: #3c6e47;
+}
+.webapp[data-state='error'] .webapp-status {
+  color: #a23b2e;
+}

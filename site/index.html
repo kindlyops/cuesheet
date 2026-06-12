@@ -66,6 +66,21 @@
               <span class="dl-meta" id="dl-win-meta">.exe / .msi</span>
             </a>
           </div>
+
+          <hr class="hairline" />
+
+          <h2>Or use it right here</h2>
+          <p>
+            The same Rust engine, compiled to WebAssembly. Drop a playlist below and the
+            PDF is typeset entirely in your browser — nothing is uploaded anywhere.
+            <span class="sidenote">No app, no install: the hexagonal core compiled to wasm, no Tauri required.</span>
+          </p>
+          <div id="webapp" class="webapp" tabindex="0" role="button"
+               aria-label="Drop a playlist file here, or activate to browse">
+            <p class="webapp-prompt">Drop a playlist here<br /><small>or click to browse</small></p>
+            <p class="webapp-status" role="status" hidden></p>
+            <input id="webapp-file" type="file" accept=".zip,.jwlplaylist" hidden />
+          </div>
         </article>
       </main>
 

@@ -47,7 +47,11 @@ frontend-check:
     npm run check
     npm test
 
-# Run the marketing site locally
+# Build the browser (wasm) engine into the site's public assets
+wasm:
+    wasm-pack build crates/cuesheet-wasm --target web --release --out-dir ../../site/public/wasm
+
+# Run the marketing site locally (run `just wasm` first for the in-browser app)
 site:
     cd site && npm run dev
 
