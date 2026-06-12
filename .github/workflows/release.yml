@@ -3,6 +3,9 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Manual trigger: builds the version in tauri.conf.json and creates the
+  # v<version> tag + draft release itself (tauri-action expands __VERSION__).
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -89,8 +92,8 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: "Cuesheet ${{ github.ref_name }}"
+          tagName: v__VERSION__
+          releaseName: "Cuesheet v__VERSION__"
           releaseBody: |
             See the assets below to download and install.
 
@@ -121,8 +124,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          TAG="v$(python3 -c "import json;print(json.load(open('src-tauri/tauri.conf.json'))['version'])")"
           RID=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
-            --jq ".[] | select(.tag_name==\"$GITHUB_REF_NAME\") | .id" | head -1)
+            --jq ".[] | select(.tag_name==\"$TAG\") | .id" | head -1)
           gh api --method POST \
             -H "Content-Type: text/html" \
             "https://uploads.github.com/repos/$GITHUB_REPOSITORY/releases/$RID/assets?name=THIRD_PARTY_LICENSES.html" \
