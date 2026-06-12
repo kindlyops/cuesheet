@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#D96A18"/>
+      <stop offset="1" stop-color="#C95B0C"/>
+    </linearGradient>
+    <filter id="paper" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+      <feColorMatrix in="n" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.035 0" result="grain"/>
+      <feComposite in="grain" in2="SourceGraphic" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- fox-orange rounded square, paper grain on top -->
+  <g filter="url(#paper)">
+    <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#card)"/>
+    <!-- soft inner highlight like layered paper -->
+    <rect x="84" y="84" width="856" height="856" rx="184" fill="none"
+      stroke="#E3A72F" stroke-opacity="0.35" stroke-width="8"/>
+  </g>
+
+  <!-- cream cuesheet card, slightly tilted for the stop-motion handmade feel -->
+  <g transform="rotate(-3 512 512)">
+    <rect x="284" y="232" width="456" height="560" rx="28" fill="#7A4419" opacity="0.35"
+      transform="translate(14 18)"/>
+    <rect x="284" y="232" width="456" height="560" rx="28" fill="#F7EED7"/>
+
+    <!-- header band -->
+    <rect x="332" y="292" width="240" height="40" rx="20" fill="#33271C"/>
+    <line x1="332" y1="372" x2="692" y2="372" stroke="#7A4419" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+
+    <!-- cue rows: number chip + label bar + duration tick -->
+    <g fill="#C95B0C">
+      <rect x="332" y="416" width="56" height="56" rx="14"/>
+      <rect x="332" y="516" width="56" height="56" rx="14"/>
+      <rect x="332" y="616" width="56" height="56" rx="14"/>
+    </g>
+    <g fill="#33271C" opacity="0.85">
+      <rect x="416" y="430" width="220" height="28" rx="14"/>
+      <rect x="416" y="530" width="180" height="28" rx="14"/>
+      <rect x="416" y="630" width="244" height="28" rx="14"/>
+    </g>
+    <g fill="#E3A72F">
+      <rect x="664" y="430" width="28" height="28" rx="9"/>
+      <rect x="624" y="530" width="68" height="28" rx="9"/>
+    </g>
+
+    <!-- footer hairline -->
+    <line x1="332" y1="724" x2="692" y2="724" stroke="#7A4419" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+  </g>
+</svg>

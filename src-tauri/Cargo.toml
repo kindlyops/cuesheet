@@ -1,0 +1,39 @@
+[package]
+name = "cuesheet-app"
+version = "0.1.0"
+description = "Cuesheet — generate PDF cuesheets from purple playlist exports"
+edition = "2021"
+license = "Apache-2.0"
+repository = "https://github.com/kindlyops/cuesheet"
+
+# Deliberately its own workspace so this crate stays out of the root
+# workspace (Tauri's heavy GUI deps don't belong in headless CI builds).
+[workspace]
+
+[lib]
+name = "cuesheet_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-process = "2"
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+cuesheet-core = { path = "../crates/cuesheet-core" }
+cuesheet-typst = { path = "../crates/cuesheet-typst" }
+
+[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "linux"))'.dependencies]
+tauri-plugin-updater = "2"
+
+# NOTE: Cargo.lock pins `time` to 0.3.44 (with serde_with 3.15 / plist 1.7)
+# because time >= 0.3.47 currently breaks tauri-utils 2.9 with E0119
+# conflicting-From-impl errors. Re-test before running `cargo update`.
+
+[profile.release]
+lto = true
+codegen-units = 1
