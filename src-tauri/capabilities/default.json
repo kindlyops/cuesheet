@@ -1,0 +1,14 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capabilities for the main Cuesheet window: open/save dialogs, updater, app relaunch, reveal-in-folder.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    "updater:default",
+    "process:default",
+    "opener:default",
+    "opener:allow-reveal-item-in-dir"
+  ]
+}

@@ -1,0 +1,19 @@
+[package]
+name = "cuesheet-core"
+description = "Pure domain core: purple playlist parsing and Typst cuesheet generation"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+zip.workspace = true
+
+[dev-dependencies]
+# Only the test fixture builder creates SQLite databases; the parser itself
+# reads them with the pure-Rust reader in src/sqlite.rs (wasm-compatible).
+rusqlite.workspace = true
+tempfile.workspace = true

@@ -1,0 +1,18 @@
+[package]
+name = "cuesheet-typst"
+description = "PdfCompiler adapter: compiles cuesheet Typst source in-process"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+cuesheet-core.workspace = true
+typst.workspace = true
+typst-pdf.workspace = true
+typst-assets.workspace = true
+
+[dev-dependencies]
+rusqlite.workspace = true
+zip.workspace = true
+tempfile.workspace = true

@@ -1,0 +1,64 @@
+/* Cuesheet design tokens — Fantastic Mr Fox palette, Tufte-style layout. */
+
+:root {
+  --cream: #f7eed7;
+  --fox: #c95b0c;
+  --mustard: #e3a72f;
+  --russet: #7a4419;
+  --ink: #33271c;
+  --apple-cider: #efd9a7;
+
+  font-family: Palatino, Georgia, "et-book", serif;
+  color: var(--ink);
+  background-color: var(--cream);
+  font-size: 17px;
+  line-height: 1.5;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: var(--cream);
+  /* The whole window is a drop target; never show text-selection chrome. */
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+#app {
+  height: 100%;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  background: var(--apple-cider);
+}
+
+:focus-visible {
+  outline: 2px solid var(--fox);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

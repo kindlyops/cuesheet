@@ -1,0 +1,330 @@
+/* Cuesheet site — Mr Fox palette, Tufte typography */
+
+:root {
+  --cream: #f7eed7;
+  --fox: #c95b0c;
+  --mustard: #e3a72f;
+  --russet: #7a4419;
+  --ink: #33271c;
+  --apple-cider: #efd9a7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: Palatino, 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+#page {
+  transition: opacity 0.6s ease;
+}
+
+#page.draining {
+  opacity: 0;
+}
+
+/* ---------- Hero ---------- */
+
+#hero {
+  position: relative;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f7eed7 0%, #efd9a7 100%);
+}
+
+#hero canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#hero-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8vh;
+  pointer-events: none;
+  text-align: center;
+}
+
+.hero-wordmark {
+  margin: 0;
+  font-size: clamp(2.6rem, 7vw, 4.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-shadow: 0 1px 0 rgba(247, 238, 215, 0.8);
+}
+
+.hero-tagline {
+  margin: 0.2em 0 1.2em;
+  font-style: italic;
+  color: var(--russet);
+  font-size: clamp(1rem, 2.5vw, 1.35rem);
+}
+
+.hero-scroll {
+  pointer-events: auto;
+  text-decoration: none;
+  color: var(--fox);
+  font-size: 1.6rem;
+  line-height: 1;
+  border: 1px solid var(--russet);
+  border-radius: 50%;
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  background: rgba(247, 238, 215, 0.65);
+}
+
+.hero-scroll:hover {
+  background: var(--apple-cider);
+}
+
+/* No-WebGL fallback hero block */
+#hero-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 75%, rgba(201, 91, 12, 0.18), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 30% 25%, rgba(227, 167, 47, 0.25), transparent 70%),
+    linear-gradient(180deg, var(--cream), var(--apple-cider));
+}
+
+#hero-fallback[hidden] {
+  display: none;
+}
+
+.fallback-card {
+  text-align: center;
+  border: 1px solid var(--russet);
+  background: rgba(247, 238, 215, 0.85);
+  padding: 3rem 4rem;
+  max-width: 32rem;
+}
+
+.fallback-leaf {
+  font-size: 3rem;
+  display: block;
+}
+
+.fallback-title {
+  font-size: 3rem;
+  font-weight: 400;
+  margin: 0.4em 0 0.2em;
+}
+
+.fallback-sub {
+  font-style: italic;
+  color: var(--russet);
+  margin: 0;
+}
+
+/* ---------- Tufte content ---------- */
+
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 5rem 2rem 3rem;
+}
+
+@media (min-width: 64rem) {
+  main {
+    /* leave a generous right margin for sidenotes, Tufte style */
+    margin-left: max(2rem, calc(50% - 32rem));
+    padding-right: 18rem;
+  }
+}
+
+h2 {
+  font-weight: 400;
+  font-style: italic;
+  font-size: 1.6rem;
+  margin: 2.5rem 0 0.8rem;
+}
+
+.lede {
+  font-size: 1.2rem;
+}
+
+.sidenote {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--russet);
+  font-style: italic;
+}
+
+@media (min-width: 64rem) {
+  .sidenote {
+    float: right;
+    clear: right;
+    width: 14rem;
+    margin-right: -16rem;
+    margin-top: 0.2rem;
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .sidenote {
+    display: block;
+    margin: 0.4rem 0 0.4rem 1.5rem;
+    padding-left: 0.8rem;
+    border-left: 1px solid var(--apple-cider);
+  }
+}
+
+.hairline {
+  border: none;
+  border-top: 1px solid var(--russet);
+  opacity: 0.45;
+  margin: 3rem 0;
+}
+
+.features {
+  list-style: none;
+  padding: 0;
+}
+
+.features li {
+  margin: 0.7em 0;
+  padding-left: 1.6em;
+  position: relative;
+}
+
+.features li::before {
+  content: '\1F342'; /* falling leaf */
+  position: absolute;
+  left: 0;
+  font-size: 0.9em;
+}
+
+code,
+kbd {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  background: var(--apple-cider);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+
+/* ---------- Download buttons ---------- */
+
+.downloads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.dl-button {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  text-decoration: none;
+  background: var(--fox);
+  color: var(--cream);
+  padding: 0.9rem 1.8rem;
+  border-radius: 6px;
+  box-shadow: 0 2px 0 var(--russet);
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.dl-button:hover {
+  background: var(--mustard);
+  color: var(--ink);
+}
+
+.dl-button:active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.dl-os {
+  font-size: 1.1rem;
+}
+
+.dl-meta {
+  font-size: 0.8rem;
+  opacity: 0.85;
+  font-style: italic;
+}
+
+/* ---------- Footer ---------- */
+
+footer {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 0 2rem 3rem;
+  font-size: 0.95rem;
+  color: var(--russet);
+}
+
+footer a {
+  color: var(--fox);
+}
+
+footer .hint {
+  font-size: 0.75rem;
+  opacity: 0.55;
+  font-style: italic;
+}
+
+/* ---------- Easter egg layers ---------- */
+
+#egg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 50;
+  display: block;
+}
+
+#egg-hint {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  color: var(--apple-cider);
+  font-style: italic;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 1s ease;
+  pointer-events: none;
+}
+
+#egg-hint.visible {
+  opacity: 0.8;
+}
+
+body.egg-active {
+  overflow: hidden;
+  background: var(--ink);
+}
