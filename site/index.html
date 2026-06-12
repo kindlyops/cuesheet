@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Cuesheet — drop a playlist, get a beautifully typeset PDF cuesheet. A small desktop app for macOS and Windows." />
+    <meta name="color-scheme" content="light" />
+    <title>Cuesheet — playlists, beautifully typeset</title>
+  </head>
+  <body>
+    <div id="page">
+      <!-- Hero: full-viewport three.js diorama (canvas injected here) -->
+      <header id="hero" aria-label="An autumn paper diorama with a red panda">
+        <div id="hero-fallback" hidden>
+          <div class="fallback-card">
+            <span class="fallback-leaf" aria-hidden="true">&#127810;</span>
+            <h1 class="fallback-title">Cuesheet</h1>
+            <p class="fallback-sub">an autumn diorama would be here, but your browser sat this one out</p>
+          </div>
+        </div>
+        <div id="hero-overlay">
+          <h1 class="hero-wordmark">Cuesheet</h1>
+          <p class="hero-tagline">playlists, beautifully typeset</p>
+          <a class="hero-scroll" href="#about" aria-label="Scroll to learn more">&#8595;</a>
+        </div>
+      </header>
+
+      <!-- Below the fold: Tufte-style content -->
+      <main id="about">
+        <article>
+          <h2>What it does</h2>
+          <p class="lede">
+            Drop a playlist, get a beautifully typeset PDF cuesheet.
+            <span class="sidenote">Fully offline — everything comes from the data inside the playlist file itself.</span>
+            Cuesheet opens a purple playlist export, reads every cue, marker, and
+            thumbnail, and compiles a clean, print-ready PDF with Typst — numbered cues,
+            durations, end actions, and artwork laid out the way a stage manager would
+            want them. No accounts, no uploads, no fuss: the native save dialog opens
+            the moment your cuesheet is ready.
+          </p>
+
+          <hr class="hairline" />
+
+          <h2>Features</h2>
+          <ul class="features">
+            <li>Drag-and-drop a playlist ZIP — or browse for one</li>
+            <li>Typeset with Typst: crisp tables, thumbnails, durations, end actions
+              <span class="sidenote">The same template as <code>vbs plt build</code>, ported verbatim.</span>
+            </li>
+            <li>Entirely offline; your playlist never leaves your machine</li>
+            <li>Native save dialog, sensible default filename</li>
+            <li>Auto-updates itself from GitHub Releases</li>
+          </ul>
+
+          <hr class="hairline" />
+
+          <h2>Download</h2>
+          <p>Free and open source, for macOS and Windows.</p>
+          <div class="downloads">
+            <a id="dl-mac" class="dl-button" href="https://github.com/kindlyops/cuesheet/releases" rel="noopener">
+              <span class="dl-os">Download for macOS</span>
+              <span class="dl-meta" id="dl-mac-meta">.dmg</span>
+            </a>
+            <a id="dl-win" class="dl-button" href="https://github.com/kindlyops/cuesheet/releases" rel="noopener">
+              <span class="dl-os">Download for Windows</span>
+              <span class="dl-meta" id="dl-win-meta">.exe / .msi</span>
+            </a>
+          </div>
+        </article>
+      </main>
+
+      <footer>
+        <hr class="hairline" />
+        <p>
+          <a href="https://github.com/kindlyops/cuesheet" rel="noopener">Source on GitHub</a>
+          &nbsp;&middot;&nbsp; Built with Tauri &amp; Typst
+          &nbsp;&middot;&nbsp; Apache-2.0 licensed
+        </p>
+        <p class="hint" aria-hidden="true">psst: type <kbd>plt</kbd></p>
+      </footer>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
