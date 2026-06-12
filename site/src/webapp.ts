@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 // "Use it right here": the browser version of Cuesheet. Lazy-loads the
 // wasm-pack bundle from public/wasm/ the first time the drop zone is used,
 // generates the PDF client-side, and triggers a download. The wasm bundle is
