@@ -149,7 +149,7 @@ jobs:
       - name: Install cargo-about
         run: cargo install cargo-about --locked --features cli
       - name: Generate THIRD_PARTY_LICENSES.html
-        run: cargo about generate about.hbs -o THIRD_PARTY_LICENSES.html
+        run: cargo about generate --workspace about.hbs -o THIRD_PARTY_LICENSES.html
       - name: Upload to the draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
