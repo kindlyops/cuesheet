@@ -73,17 +73,31 @@ impl<'a> SqliteFile<'a> {
         })
     }
 
-    /// Reads an entire table by name (full scan, in rowid order).
+    /// Reads an entire table by name (full scan, in storage order).
+    ///
+    /// Handles both ordinary rowid tables (table b-trees) and WITHOUT ROWID
+    /// tables, which SQLite stores as index b-trees keyed by the primary key
+    /// columns followed by the remaining columns in declared order.
     pub fn read_table(&self, name: &str) -> SqlResult<Table> {
         let (root, sql) = self
             .find_table(name)?
             .ok_or_else(|| format!("no such table: {name}"))?;
         let columns = parse_create_table_columns(&sql);
         let ipk_index = integer_primary_key_index(&sql);
+        let stored_to_declared = without_rowid_column_order(&sql, &columns);
 
         let mut rows = Vec::new();
         self.walk(root, &mut |rowid, mut values: Vec<Value>| {
-            if let Some(ipk) = ipk_index {
+            if let Some(order) = &stored_to_declared {
+                // WITHOUT ROWID: reorder PK-first storage back to declared order.
+                let mut reordered = vec![Value::Null; columns.len()];
+                for (stored_idx, &declared_idx) in order.iter().enumerate() {
+                    if let Some(v) = values.get(stored_idx) {
+                        reordered[declared_idx] = v.clone();
+                    }
+                }
+                values = reordered;
+            } else if let Some(ipk) = ipk_index {
                 if ipk < values.len() && values[ipk] == Value::Null {
                     values[ipk] = Value::Int(rowid);
                 }
@@ -176,9 +190,48 @@ impl<'a> SqliteFile<'a> {
                 for i in 0..cell_count {
                     let p = pointers + i * 2;
                     let cell = u16::from_be_bytes([page[p], page[p + 1]]) as usize;
-                    let (rowid, payload) = self.leaf_cell_payload(page, cell)?;
+                    let (rowid, payload) = self.leaf_cell_payload(page, cell, true)?;
                     let values = decode_record(&payload)?;
                     emit(rowid, values);
+                }
+                Ok(())
+            }
+            0x02 => {
+                // Interior index page (WITHOUT ROWID tables): cells carry
+                // both a left-child pointer and a key record that is itself a
+                // row, plus the rightmost pointer at +8.
+                let pointers = header_offset + 12;
+                for i in 0..cell_count {
+                    let p = pointers + i * 2;
+                    let cell = u16::from_be_bytes([page[p], page[p + 1]]) as usize;
+                    let child = u32::from_be_bytes([
+                        page[cell],
+                        page[cell + 1],
+                        page[cell + 2],
+                        page[cell + 3],
+                    ]);
+                    self.walk(child, emit)?;
+                    let (_, payload) = self.leaf_cell_payload(page, cell + 4, false)?;
+                    let values = decode_record(&payload)?;
+                    emit(0, values);
+                }
+                let right = u32::from_be_bytes([
+                    page[header_offset + 8],
+                    page[header_offset + 9],
+                    page[header_offset + 10],
+                    page[header_offset + 11],
+                ]);
+                self.walk(right, emit)
+            }
+            0x0A => {
+                // Leaf index page (WITHOUT ROWID tables): payload only.
+                let pointers = header_offset + 8;
+                for i in 0..cell_count {
+                    let p = pointers + i * 2;
+                    let cell = u16::from_be_bytes([page[p], page[p + 1]]) as usize;
+                    let (_, payload) = self.leaf_cell_payload(page, cell, false)?;
+                    let values = decode_record(&payload)?;
+                    emit(0, values);
                 }
                 Ok(())
             }
@@ -186,14 +239,30 @@ impl<'a> SqliteFile<'a> {
         }
     }
 
-    /// Reads a leaf cell, following overflow pages when the payload spills.
-    fn leaf_cell_payload(&self, page: &[u8], cell: usize) -> SqlResult<(i64, Vec<u8>)> {
+    /// Reads a cell payload, following overflow pages when it spills.
+    /// `is_table` selects table-cell layout (payload len + rowid varints,
+    /// spill threshold U-35) vs index-cell layout (payload len only,
+    /// spill threshold ((U-12)*64/255)-23).
+    fn leaf_cell_payload(
+        &self,
+        page: &[u8],
+        cell: usize,
+        is_table: bool,
+    ) -> SqlResult<(i64, Vec<u8>)> {
         let mut pos = cell;
         let payload_len = read_varint(page, &mut pos)? as usize;
-        let rowid = read_varint(page, &mut pos)?;
+        let rowid = if is_table {
+            read_varint(page, &mut pos)?
+        } else {
+            0
+        };
 
         let u = self.usable_size;
-        let x = u - 35;
+        let x = if is_table {
+            u - 35
+        } else {
+            (u - 12) * 64 / 255 - 23
+        };
         let local = if payload_len <= x {
             payload_len
         } else {
@@ -401,6 +470,63 @@ fn integer_primary_key_index(sql: &str) -> Option<usize> {
     None
 }
 
+/// For a WITHOUT ROWID table, returns the mapping from stored column position
+/// to declared column position. Storage order is: primary-key columns (in PK
+/// declaration order), then the remaining columns in declared order. Returns
+/// None for ordinary rowid tables.
+fn without_rowid_column_order(sql: &str, declared: &[String]) -> Option<Vec<usize>> {
+    let lower = sql.to_ascii_lowercase();
+    let close = lower.rfind(')')?;
+    if !lower[close..].contains("without rowid") {
+        return None;
+    }
+
+    let open = lower.find('(')?;
+    let inner = &lower[open + 1..close];
+    let mut pk_cols: Vec<String> = Vec::new();
+    for part in split_top_level(inner) {
+        let trimmed = part.trim();
+        let first = trimmed
+            .split_whitespace()
+            .next()
+            .unwrap_or_default()
+            .trim_matches(['"', '`', '[', ']', '\'']);
+        if first == "primary" || (first == "constraint" && trimmed.contains("primary key")) {
+            // Table constraint: PRIMARY KEY (a, b DESC, ...)
+            if let (Some(o), Some(c)) = (trimmed.find('(').map(|i| i + 1), trimmed.rfind(')')) {
+                for col in trimmed[o..c].split(',') {
+                    let name = col
+                        .split_whitespace()
+                        .next()
+                        .unwrap_or_default()
+                        .trim_matches(['"', '`', '[', ']', '\'']);
+                    pk_cols.push(name.to_string());
+                }
+            }
+        } else if trimmed.contains("primary key")
+            && !["unique", "check", "foreign", "without"].contains(&first)
+        {
+            // Inline column-level PRIMARY KEY.
+            pk_cols.push(first.to_string());
+        }
+    }
+    if pk_cols.is_empty() {
+        return None;
+    }
+
+    let declared_lower: Vec<String> = declared.iter().map(|c| c.to_ascii_lowercase()).collect();
+    let mut stored_to_declared: Vec<usize> = Vec::with_capacity(declared.len());
+    for pk in &pk_cols {
+        stored_to_declared.push(declared_lower.iter().position(|c| c == pk)?);
+    }
+    for (i, _) in declared_lower.iter().enumerate() {
+        if !stored_to_declared.contains(&i) {
+            stored_to_declared.push(i);
+        }
+    }
+    Some(stored_to_declared)
+}
+
 fn split_top_level(s: &str) -> Vec<String> {
     let mut depth = 0usize;
     let mut part = String::new();
@@ -505,6 +631,65 @@ mod tests {
             table.get(row, "B"),
             Some(&Value::Blob(vec![0xDE, 0xAD, 0xBE, 0xEF]))
         );
+    }
+
+    #[test]
+    fn reads_without_rowid_table_with_inline_pk() {
+        let db = make_db(
+            "CREATE TABLE T (Key TEXT PRIMARY KEY, A INTEGER, B TEXT) WITHOUT ROWID;
+             INSERT INTO T VALUES ('k2', 2, 'two');
+             INSERT INTO T VALUES ('k1', 1, 'one');",
+        );
+        let file = SqliteFile::parse(&db).unwrap();
+        let table = file.read_table("T").unwrap();
+        assert_eq!(table.rows.len(), 2);
+        // Stored in PK order (k1 first); columns restored to declared order.
+        let row = &table.rows[0];
+        assert_eq!(table.get(row, "Key").unwrap().as_str(), Some("k1"));
+        assert_eq!(table.get(row, "A").unwrap().as_i64(), Some(1));
+        assert_eq!(table.get(row, "B").unwrap().as_str(), Some("one"));
+    }
+
+    #[test]
+    fn reads_without_rowid_table_with_constraint_pk_out_of_order() {
+        // PK is (C, A) — not the declared order — so storage is C, A, B, D.
+        let db = make_db(
+            "CREATE TABLE T (A INTEGER, B TEXT, C INTEGER, D TEXT,
+                 PRIMARY KEY (C, A)) WITHOUT ROWID;
+             INSERT INTO T VALUES (1, 'b1', 10, 'd1');
+             INSERT INTO T VALUES (2, 'b2', 20, 'd2');",
+        );
+        let file = SqliteFile::parse(&db).unwrap();
+        let table = file.read_table("T").unwrap();
+        assert_eq!(table.rows.len(), 2);
+        let row = &table.rows[0];
+        assert_eq!(table.get(row, "A").unwrap().as_i64(), Some(1));
+        assert_eq!(table.get(row, "B").unwrap().as_str(), Some("b1"));
+        assert_eq!(table.get(row, "C").unwrap().as_i64(), Some(10));
+        assert_eq!(table.get(row, "D").unwrap().as_str(), Some("d1"));
+    }
+
+    #[test]
+    fn reads_large_without_rowid_table_with_interior_pages() {
+        let mut sql =
+            String::from("CREATE TABLE T (Id INTEGER PRIMARY KEY, Label TEXT) WITHOUT ROWID;");
+        for i in 0..2000 {
+            sql.push_str(&format!(
+                "INSERT INTO T VALUES ({i}, 'row {i} padded with text to fill up pages quickly');"
+            ));
+        }
+        let db = make_db(&sql);
+        let file = SqliteFile::parse(&db).unwrap();
+        let table = file.read_table("T").unwrap();
+        assert_eq!(table.rows.len(), 2000);
+        // Every row present exactly once (interior index cells carry rows).
+        let mut ids: Vec<i64> = table
+            .rows
+            .iter()
+            .map(|r| table.get(r, "Id").unwrap().as_i64().unwrap())
+            .collect();
+        ids.sort();
+        assert_eq!(ids, (0..2000).collect::<Vec<i64>>());
     }
 
     #[test]
