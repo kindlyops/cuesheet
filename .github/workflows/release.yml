@@ -93,15 +93,33 @@ jobs:
           $cert = Import-PfxCertificate -FilePath $pfx -CertStoreLocation Cert:\CurrentUser\My -Password $pwd
           echo "WIN_CERT_THUMBPRINT=$($cert.Thumbprint)" >> $env:GITHUB_ENV
 
+      # Tauri treats a set-but-empty APPLE_SIGNING_IDENTITY as "sign with
+      # identity \"\"" and fails; only export the Apple env when secrets exist
+      # so unsigned builds fall back to ad-hoc signing.
+      - name: Configure Apple signing
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          SECRET_APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          SECRET_APPLE_ID: ${{ secrets.APPLE_ID }}
+          SECRET_APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          SECRET_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$SECRET_APPLE_SIGNING_IDENTITY" ]; then
+            {
+              echo "APPLE_SIGNING_IDENTITY=$SECRET_APPLE_SIGNING_IDENTITY"
+              echo "APPLE_ID=$SECRET_APPLE_ID"
+              echo "APPLE_PASSWORD=$SECRET_APPLE_PASSWORD"
+              echo "APPLE_TEAM_ID=$SECRET_APPLE_TEAM_ID"
+            } >> "$GITHUB_ENV"
+          else
+            echo "No Apple signing identity configured: app will be ad-hoc signed."
+          fi
+
       - name: Build and publish draft release
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Apple signing/notarization env consumed by the Tauri bundler when set
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
           tagName: v__VERSION__
           releaseName: "Cuesheet v__VERSION__"
