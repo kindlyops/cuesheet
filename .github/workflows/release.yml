@@ -47,6 +47,17 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      # Updater artifacts require the signing key; without it, disable them so
+      # the bundler doesn't try to sign with an empty key. Activates
+      # automatically once TAURI_SIGNING_PRIVATE_KEY is configured.
+      - name: Configure updater artifacts
+        shell: bash
+        run: |
+          if [ -z "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            echo 'UPDATER_CONFIG=--config {"bundle":{"createUpdaterArtifacts":false}}' >> "$GITHUB_ENV"
+            echo "No updater signing key configured: updater artifacts disabled for this build."
+          fi
+
       # --- macOS signing + notarization (no-op until secrets exist) ---
       - name: Import Apple Developer ID certificate
         if: matrix.platform == 'macos-latest' && env.HAS_APPLE_CERT == 'true'
@@ -104,6 +115,7 @@ jobs:
           prerelease: false
           args: >-
             ${{ matrix.args }}
+            ${{ env.UPDATER_CONFIG }}
             ${{ env.WIN_CERT_THUMBPRINT != '' && format('--config {{"bundle":{{"windows":{{"certificateThumbprint":"{0}"}}}}}}', env.WIN_CERT_THUMBPRINT) || '' }}
 
   licenses:
