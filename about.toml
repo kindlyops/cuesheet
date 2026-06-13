@@ -17,4 +17,3 @@ accepted = [
     "Zlib",
     "Unlicense",
 ]
-workspace = true
