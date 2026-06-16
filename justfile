@@ -29,6 +29,10 @@ bless:
 pdf playlist *args:
     cargo run -p cuesheet-cli -- {{playlist}} {{args}}
 
+# Rebuild the code-signing setup PDF from its Typst source
+signing-doc:
+    cargo run -p cuesheet-typst --example typst_to_pdf -- docs/signing-setup.typ docs/signing-setup.pdf
+
 # Run the desktop app in dev mode (hot reload)
 app:
     cd src-tauri && cargo tauri dev
