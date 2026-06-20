@@ -7,8 +7,7 @@ on:
   # v<version> tag + draft release itself (tauri-action expands __VERSION__).
   workflow_dispatch:
 
-permissions:
-  contents: write
+permissions: {}
 
 jobs:
   build:
@@ -21,6 +20,8 @@ jobs:
           - platform: windows-latest
             args: ""
     runs-on: ${{ matrix.platform }}
+    permissions:
+      contents: write
     env:
       # Updater bundle signing — release builds work without these, but the
       # in-app updater can only verify bundles signed with your key.
@@ -28,21 +29,18 @@ jobs:
       TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+      # No cache: input below, so setup-node writes no cache that could poison
+      # this publishing build; the cache-poisoning finding is a false positive.
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0  # zizmor: ignore[cache-poisoning]
         with:
           node-version: 22
-          cache: npm
 
       - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8  # stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
-
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32  # v2
-        with:
-          workspaces: |
-            .
-            src-tauri
 
       - name: Install frontend dependencies
         run: npm ci
@@ -140,12 +138,13 @@ jobs:
     name: Attach third-party license bundle
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
-      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8  # stable
-      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32  # v2
         with:
-          cache-targets: false
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8  # stable
       - name: Install cargo-about
         run: cargo install cargo-about --locked --features cli
       - name: Generate THIRD_PARTY_LICENSES.html
