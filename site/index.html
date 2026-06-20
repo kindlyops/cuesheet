@@ -79,7 +79,11 @@
                aria-label="Drop a playlist file here, or activate to browse">
             <p class="webapp-prompt">Drop a playlist here<br /><small>or click to browse</small></p>
             <p class="webapp-status" role="status" hidden></p>
-            <input id="webapp-file" type="file" accept=".zip,.jwlplaylist" hidden />
+            <!-- application/octet-stream maps to the public.data UTI on iOS so
+                 Safari's Files picker lets you select a .jwlplaylist; without a
+                 generic type iOS greys out the custom extension. -->
+            <input id="webapp-file" type="file"
+                   accept=".zip,.jwlplaylist,application/zip,application/octet-stream" hidden />
           </div>
         </article>
       </main>

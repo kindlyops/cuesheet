@@ -60,17 +60,37 @@ fn rejects_missing_manifest() {
 }
 
 #[test]
+fn parses_a_v16_playlist() {
+    // Purple playlist schema 16 adds tables and columns the parser ignores;
+    // the column subset it reads is unchanged from 14, so a v16 export parses
+    // identically to the v14 standard fixture.
+    let zip = FixtureBuilder {
+        schema_version: 16,
+        ..standard_fixture()
+    }
+    .build_zip();
+    let opened = open_playlist(Cursor::new(zip)).unwrap();
+    assert_eq!(opened.playlist.schema_version, 16);
+    assert_eq!(opened.playlist.items.len(), 3);
+}
+
+#[test]
 fn rejects_unsupported_schema_version() {
     let zip = FixtureBuilder {
-        schema_version: 15,
+        schema_version: 17,
         ..standard_fixture()
     }
     .build_zip();
     let err = open_playlist(Cursor::new(zip)).unwrap_err();
     match err {
-        CuesheetError::UnsupportedSchemaVersion { found, supported } => {
-            assert_eq!(found, 15);
-            assert_eq!(supported, 14);
+        CuesheetError::UnsupportedSchemaVersion {
+            found,
+            min_supported,
+            max_supported,
+        } => {
+            assert_eq!(found, 17);
+            assert_eq!(min_supported, 14);
+            assert_eq!(max_supported, 16);
         }
         other => panic!("expected UnsupportedSchemaVersion, got {other:?}"),
     }

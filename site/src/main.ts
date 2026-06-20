@@ -102,3 +102,28 @@ window.addEventListener('keydown', (ev: KeyboardEvent) => {
     }
   }
 });
+
+// Touch devices have no keyboard: triple-tap the wordmark to open the egg.
+function initEggTouchTrigger(): void {
+  const wordmark =
+    document.querySelector<HTMLElement>('.hero-wordmark') ??
+    document.querySelector<HTMLElement>('.fallback-title');
+  if (!wordmark) return;
+
+  let taps = 0;
+  let timer = 0;
+  wordmark.addEventListener('click', () => {
+    taps += 1;
+    window.clearTimeout(timer);
+    if (taps >= 3) {
+      taps = 0;
+      void triggerEgg();
+      return;
+    }
+    timer = window.setTimeout(() => {
+      taps = 0;
+    }, 600);
+  });
+}
+
+initEggTouchTrigger();
