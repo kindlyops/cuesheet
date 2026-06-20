@@ -445,7 +445,11 @@ export async function runEasterEgg(onDone: () => void): Promise<EggController> {
 
   const hint = document.createElement('p');
   hint.id = 'egg-hint';
-  hint.textContent = 'the hexagonal architecture of cuesheet — drag to orbit, Esc to return';
+  hint.textContent =
+    'the hexagonal architecture of cuesheet — drag to orbit, tap here or Esc to return';
+  // Tapping the hint returns to the page — the only dismissal touch devices
+  // have, since there is no Esc key.
+  hint.addEventListener('click', () => dismiss());
   document.body.appendChild(hint);
 
   const page = document.getElementById('page');

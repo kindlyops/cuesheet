@@ -322,6 +322,9 @@ footer .hint {
 
 #egg-hint.visible {
   opacity: 0.8;
+  /* Tappable once visible so touch devices can return without a keyboard. */
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 body.egg-active {
