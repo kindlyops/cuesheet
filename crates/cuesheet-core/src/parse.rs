@@ -14,8 +14,14 @@ use crate::error::{CuesheetError, Result};
 use crate::model::{EmbeddedImage, Item, Location, Marker, Playlist, Ticks};
 use crate::sqlite::{SqliteFile, Table, Value};
 
-/// The only schema version vbs (and therefore this port) understands.
-pub const SUPPORTED_SCHEMA_VERSION: i64 = 14;
+/// Lowest playlist schema version this port understands. vbs originally
+/// targeted version 14.
+pub const MIN_SCHEMA_VERSION: i64 = 14;
+
+/// Highest playlist schema version this port understands. Newer JW Library
+/// exports (15, 16) only add tables and columns the parser ignores — the
+/// column subset read here is unchanged from 14 — so they parse identically.
+pub const MAX_SCHEMA_VERSION: i64 = 16;
 
 #[derive(Deserialize)]
 struct ManifestDoc {
@@ -75,10 +81,11 @@ pub fn open_playlist<R: Read + Seek>(reader: R) -> Result<OpenedPlaylist> {
                 "manifest userDataBackup.schemaVersion is not an integer".to_string(),
             )
         })?;
-    if schema_version != SUPPORTED_SCHEMA_VERSION {
+    if !(MIN_SCHEMA_VERSION..=MAX_SCHEMA_VERSION).contains(&schema_version) {
         return Err(CuesheetError::UnsupportedSchemaVersion {
             found: schema_version,
-            supported: SUPPORTED_SCHEMA_VERSION,
+            min_supported: MIN_SCHEMA_VERSION,
+            max_supported: MAX_SCHEMA_VERSION,
         });
     }
 

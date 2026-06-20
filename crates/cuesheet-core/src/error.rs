@@ -16,8 +16,12 @@ pub enum CuesheetError {
     #[error("the playlist manifest is invalid: {0}")]
     InvalidManifest(String),
 
-    #[error("unsupported playlist schema version {found} (this app supports version {supported})")]
-    UnsupportedSchemaVersion { found: i64, supported: i64 },
+    #[error("unsupported playlist schema version {found} (this app supports versions {min_supported}-{max_supported})")]
+    UnsupportedSchemaVersion {
+        found: i64,
+        min_supported: i64,
+        max_supported: i64,
+    },
 
     #[error("the playlist database could not be read: {0}")]
     Database(String),
