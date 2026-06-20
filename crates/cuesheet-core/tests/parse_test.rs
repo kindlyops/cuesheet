@@ -61,8 +61,8 @@ fn rejects_missing_manifest() {
 
 #[test]
 fn parses_a_v16_playlist() {
-    // JW Library schema 16 adds tables and columns the parser ignores; the
-    // column subset it reads is unchanged from 14, so a v16 export parses
+    // Purple playlist schema 16 adds tables and columns the parser ignores;
+    // the column subset it reads is unchanged from 14, so a v16 export parses
     // identically to the v14 standard fixture.
     let zip = FixtureBuilder {
         schema_version: 16,

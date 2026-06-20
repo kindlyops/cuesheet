@@ -18,9 +18,9 @@ use crate::sqlite::{SqliteFile, Table, Value};
 /// targeted version 14.
 pub const MIN_SCHEMA_VERSION: i64 = 14;
 
-/// Highest playlist schema version this port understands. Newer JW Library
-/// exports (15, 16) only add tables and columns the parser ignores — the
-/// column subset read here is unchanged from 14 — so they parse identically.
+/// Highest playlist schema version this port understands. Newer purple
+/// playlist exports (15, 16) only add tables and columns the parser ignores —
+/// the column subset read here is unchanged from 14 — so they parse identically.
 pub const MAX_SCHEMA_VERSION: i64 = 16;
 
 #[derive(Deserialize)]
